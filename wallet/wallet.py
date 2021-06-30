@@ -45,7 +45,7 @@ coins[BTCTEST].append(btctest[0:3])
 def priv_key_to_account(coin, priv_key):
     if coin == ETH:
         account = Account.privateKeyToAccount(priv_key)
-    i:
+    if coin == BTCTEST:
         account = PrivateKeyTestnet(priv_key)
 
     return account
@@ -55,17 +55,17 @@ def priv_key_to_account(coin, priv_key):
 def create_tx(coin, account, to, amount):
     if coin == ETH:
         gasEstimate = w3.eth.estimateGas({"from": account.address, "to": to, "value": amount})
-        return {"from": account.address,"to": to,"value": amount,"gasPrice": w3.eth.gasPrice,"gas": gasEstimate,"nonce": w3.eth.getTransactionCount(account.address),}
-    else:
+        return {"from": account.address,"to": to,"value": amount,"gasPrice": w3.eth.gasPrice,"gas": gasEstimate,"nonce": w3.eth.getTransactionCount(account.address),"chainID": w3.eth.chain_id}
+    if coin == BTCTEST:
         return PrivateKeyTestnet.prepare_transaction(account.address, [(to, amount, BTC)])
 
 # Create a function called `send_tx` that calls `create_tx`, signs and sends the transaction.
 def send_tx(coin, account, to, amount):
     if coin == ETH:
-        raw_tx = create_raw_tx(coin, account.address, to, amount)
+        raw_tx = create_tx(coin, account.address, to, amount)
         signed = account.sign_transaction(raw_tx)
-        return w3.eth.sendRawTransaction(signed_tx.rawTransaction)
-    else:
+        return w3.eth.sendRawTransaction(signed.rawTransaction)
+    if coin == BTCTEST:
         raw_tx = create_tx(coin, account, to, amount)
         signed = account.sign_transaction(raw_tx)
         return NetworkAPI.broadcast_tx_testnet(signed)
